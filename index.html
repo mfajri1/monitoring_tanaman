@@ -1,288 +1,347 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Monitoring Tanaman - Dashboard</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Monitoring Tanaman - Dashboard</title>
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-green-600 text-white p-5 shadow-md">
+      <h1 class="text-3xl font-bold text-center">Monitoring Tanaman</h1>
+      <p class="text-center mt-1">
+        Dashboard Data Sensor dengan Firebase & Chart.js
+      </p>
+    </header>
 
-  <header class="bg-green-600 text-white p-5 shadow-md">
-    <h1 class="text-3xl font-bold text-center">Monitoring Tanaman</h1>
-    <p class="text-center mt-1">Dashboard Data Sensor dengan Firebase & Chart.js</p>
-  </header>
+    <main class="flex-grow container mx-auto px-4 py-8">
+      <!-- Filter Tanggal -->
+      <section class="max-w-md mx-auto mb-8">
+        <label for="filterDate" class="block mb-2 font-semibold text-gray-700"
+          >Filter Tanggal:</label
+        >
+        <input
+          type="date"
+          id="filterDate"
+          class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </section>
 
-  <main class="flex-grow container mx-auto px-4 py-8">
+      <!-- Grid 2 Kolom: Tabel (Kiri) dan Chart (Kanan) -->
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Tabel Data -->
+        <div
+          class="overflow-y-auto max-h-[600px] shadow-lg rounded-lg bg-white"
+        >
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-green-600 text-white sticky top-0">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider"
+                >
+                  Tanggal
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider"
+                >
+                  Jam
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider"
+                >
+                  Water Level
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider"
+                >
+                  Soil Moisture
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider"
+                >
+                  Status Lampu
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="dataTableBody"
+              class="bg-white divide-y divide-gray-200 text-center"
+            ></tbody>
+          </table>
+        </div>
 
-    <!-- Filter Tanggal -->
-    <section class="max-w-md mx-auto mb-8">
-      <label for="filterDate" class="block mb-2 font-semibold text-gray-700">Filter Tanggal:</label>
-      <input type="date" id="filterDate" class="w-full px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500" />
-    </section>
+        <!-- Charts -->
+        <div class="space-y-8">
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-center text-green-700">
+              Water Level
+            </h2>
+            <canvas id="chartWaterLevel" class="w-full max-h-[300px]"></canvas>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-center text-green-700">
+              Soil Moisture
+            </h2>
+            <canvas
+              id="chartSoilMoisture"
+              class="w-full max-h-[300px]"
+            ></canvas>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-center text-green-700">
+              Status Lampu
+            </h2>
+            <canvas id="chartStatusLampu" class="w-full max-h-[300px]"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
 
-    <!-- Tabel Data -->
-    <section class="overflow-x-auto mb-10 shadow-lg rounded-lg bg-white">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-green-600 text-white">
-          <tr>
-            <th class="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">Tanggal</th>
-            <th class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider">Jam</th>
-            <th class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider">Water Level (0/1)</th>
-            <th class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider">Soil Moisture (0-255)</th>
-            <th class="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider">Status Lampu (0/1)</th>
-          </tr>
-        </thead>
-        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200 text-center"></tbody>
-      </table>
-    </section>
+    <footer class="bg-green-600 text-white p-4 text-center">
+      &copy; 2025 Monitoring Tanaman Dashboard
+    </footer>
 
-    <!-- Charts -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="bg-white p-6 rounded-lg shadow-lg">
-        <h2 class="text-xl font-semibold mb-4 text-center text-green-700">Water Level</h2>
-        <canvas id="chartWaterLevel" class="w-full w-full max-h-[400px]"></canvas>
-      </div>
-      <div class="bg-white p-6 rounded-lg shadow-lg">
-        <h2 class="text-xl font-semibold mb-4 text-center text-green-700">Soil Moisture</h2>
-        <canvas id="chartSoilMoisture" class="w-full max-h-[400px]"></canvas>
-      </div>
-      <div class="bg-white p-6 rounded-lg shadow-lg">
-        <h2 class="text-xl font-semibold mb-4 text-center text-green-700">Status Lampu</h2>
-        <canvas id="chartStatusLampu" class="w-full max-h-[400px]"></canvas>
-      </div>
-    </section>
-  </main>
+    <script>
+      // Firebase config (ganti dengan config milikmu)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCqW53JDIWtk_MpxpyhmQlW31ReidPD2-A",
+        authDomain: "monitoring-tanaman-2862c.firebaseapp.com",
+        databaseURL:
+          "https://monitoring-tanaman-2862c-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "monitoring-tanaman-2862c",
+        storageBucket: "monitoring-tanaman-2862c.appspot.com",
+        messagingSenderId: "347555225151",
+        appId: "1:347555225151:web:47f4f4269a0dffbc36e28a",
+      };
 
-  <footer class="bg-green-600 text-white p-4 text-center">
-    &copy; 2025 Monitoring Tanaman Dashboard
-  </footer>
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+      const ref = db.ref("monitoringTanaman");
 
-<script>
-  // Firebase config (ganti dengan config milikmu)
-  const firebaseConfig = {
-    apiKey: "AIzaSyCqW53JDIWtk_MpxpyhmQlW31ReidPD2-A",
-    authDomain: "monitoring-tanaman-2862c.firebaseapp.com",
-    databaseURL: "https://monitoring-tanaman-2862c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "monitoring-tanaman-2862c",
-    storageBucket: "monitoring-tanaman-2862c.appspot.com",
-    messagingSenderId: "347555225151",
-    appId: "1:347555225151:web:47f4f4269a0dffbc36e28a"
-  };
+      // Chart instances
+      let chartWL, chartSM, chartSL;
 
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const ref = db.ref('monitoringTanaman');
+      // Elements
+      const tbody = document.getElementById("dataTableBody");
+      const filterDate = document.getElementById("filterDate");
 
+      // State for all data
+      let allData = {};
 
+      // Event Listener untuk filter tanggal
+      filterDate.addEventListener("change", () => {
+        const selectedDate = filterDate.value; // format: yyyy-mm-dd
+        renderData(selectedDate);
+      });
 
-  // Chart instances
-  let chartWL, chartSM, chartSL;
+      // Listen realtime database changes
+      ref.on("value", (snapshot) => {
+        allData = snapshot.val() || {};
+        console.log("Data dari Firebase:", allData);
+        renderData(filterDate.value); // render dengan filter tanggal saat ini (atau kosong)
+      });
 
-  // Elements
-  const tbody = document.getElementById('dataTableBody');
-  const filterDate = document.getElementById('filterDate');
+      // Fungsi render tabel dan chart berdasarkan filter tanggal
+      function renderData(filter = "") {
+        tbody.innerHTML = "";
 
-  // State for all data
-  let allData = {};
+        // Data array untuk chart
+        const labels = [];
+        const waterLevels = [];
+        const soilMoistures = [];
+        const statusLampus = [];
 
-  // Event Listener untuk filter tanggal
-  filterDate.addEventListener('change', () => {
-    const selectedDate = filterDate.value; // format: yyyy-mm-dd
-    renderData(selectedDate);
-  });
+        console.log("Filter tanggal:", filter);
 
-  // Listen realtime database changes
-  ref.on('value', snapshot => {
-    allData = snapshot.val() || {};
-     console.log('Data dari Firebase:', allData);
-    renderData(filterDate.value); // render dengan filter tanggal saat ini (atau kosong)
-  });
+        if (!allData || Object.keys(allData).length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="py-4">Data belum tersedia.</td></tr>`;
+          clearCharts();
+          return;
+        }
 
-  // Fungsi render tabel dan chart berdasarkan filter tanggal
-  function renderData(filter = '') {
-    tbody.innerHTML = '';
+        // Iterasi data sesuai filter tanggal
+        let rowCount = 0;
+        Object.keys(allData)
+          .sort()
+          .forEach((date) => {
+            if (filter && date !== filter) return; // filter tanggal
 
-    // Data array untuk chart
-    const labels = [];
-    const waterLevels = [];
-    const soilMoistures = [];
-    const statusLampus = [];
+            const dayData = allData[date];
+            Object.keys(dayData)
+              .sort()
+              .forEach((time) => {
+                const d = dayData[time];
+                labels.push(`${date} ${time}`);
+                waterLevels.push(d.water_level);
+                soilMoistures.push(d.soil_moisture);
+                statusLampus.push(d.status_lampu);
 
-     console.log('Data dari Firebase:', filter);
-
-    if (!allData || Object.keys(allData).length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="py-4">Data belum tersedia.</td></tr>`;
-      clearCharts();
-      return;
-    }
-    
-    // Iterasi data sesuai filter tanggal
-    let rowCount = 0;
-    Object.keys(allData).sort().forEach(date => {
-      if (filter && date !== filter) return; // filter tanggal
-
-      const dayData = allData[date];
-      Object.keys(dayData).sort().forEach(time => {
-        const d = dayData[time];
-        labels.push(`${date} ${time}`);
-        waterLevels.push(d.water_level);
-        soilMoistures.push(d.soil_moisture);
-        statusLampus.push(d.status_lampu);
-
-        // Buat row tabel
-        const tr = document.createElement('tr');
-        tr.classList.add(rowCount % 2 === 0 ? 'bg-gray-50' : 'bg-white');
-        tr.innerHTML = `
+                // Buat row tabel
+                const tr = document.createElement("tr");
+                tr.classList.add(
+                  rowCount % 2 === 0 ? "bg-gray-50" : "bg-white"
+                );
+                tr.innerHTML = `
           <td class="px-6 py-3 text-left">${date}</td>
           <td class="px-6 py-3">${time}</td>
           <td class="px-6 py-3">${d.water_level}</td>
           <td class="px-6 py-3">${d.soil_moisture}</td>
           <td class="px-6 py-3">${d.status_lampu}</td>
         `;
-        tbody.appendChild(tr);
-        rowCount++;
-      });
-    });
+                tbody.appendChild(tr);
+                rowCount++;
+              });
+          });
 
-    if (rowCount === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="py-4">Tidak ada data pada tanggal ini.</td></tr>`;
-      clearCharts();
-      return;
-    }
-
-    renderCharts(labels, waterLevels, soilMoistures, statusLampus);
-  }
-
-  function clearCharts() {
-    if (chartWL) chartWL.destroy();
-    if (chartSM) chartSM.destroy();
-    if (chartSL) chartSL.destroy();
-  }
-
-  function renderCharts(labels, waterLevels, soilMoistures, statusLampus) {
-    clearCharts();
-
-    // Water Level (0/1)
-    const ctxWL = document.getElementById('chartWaterLevel').getContext('2d');
-    chartWL = new Chart(ctxWL, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Water Level',
-          data: waterLevels,
-          borderColor: '#2563EB', // Tailwind blue-600
-          backgroundColor: 'rgba(37, 99, 235, 0.3)',
-          stepped: true,
-          fill: true,
-          tension: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            min: 0,
-            max: 1,
-            ticks: { stepSize: 1 },
-            title: { display: true, text: 'Water Level (0 atau 1)' }
-          },
-          x: {
-            title: { display: true, text: 'Tanggal dan Jam' }
-          }
-        },
-        plugins: {
-          legend: { display: true },
-          tooltip: { enabled: true }
+        if (rowCount === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="py-4">Tidak ada data pada tanggal ini.</td></tr>`;
+          clearCharts();
+          return;
         }
-      }
-    });
 
-    // Soil Moisture (0-255)
-    const ctxSM = document.getElementById('chartSoilMoisture').getContext('2d');
-    chartSM = new Chart(ctxSM, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Soil Moisture',
-          data: soilMoistures,
-          borderColor: '#16A34A', // Tailwind green-600
-          backgroundColor: 'rgba(22, 163, 74, 0.3)',
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            min: 0,
-            max: 255,
-            title: { display: true, text: 'Soil Moisture (0-255)' }
+        renderCharts(labels, waterLevels, soilMoistures, statusLampus);
+      }
+
+      function clearCharts() {
+        if (chartWL) chartWL.destroy();
+        if (chartSM) chartSM.destroy();
+        if (chartSL) chartSL.destroy();
+      }
+
+      function renderCharts(labels, waterLevels, soilMoistures, statusLampus) {
+        clearCharts();
+
+        // Water Level (0/1)
+        const ctxWL = document
+          .getElementById("chartWaterLevel")
+          .getContext("2d");
+        chartWL = new Chart(ctxWL, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Water Level",
+                data: waterLevels,
+                borderColor: "#2563EB", // Tailwind blue-600
+                backgroundColor: "rgba(37, 99, 235, 0.3)",
+                stepped: true,
+                fill: true,
+                tension: 0,
+              },
+            ],
           },
-          x: {
-            title: { display: true, text: 'Tanggal dan Jam' }
-          }
-        },
-        plugins: {
-          legend: { display: true },
-          tooltip: { enabled: true }
-        }
-      }
-    });
-
-    // Status Lampu (0/1)
-    const ctxSL = document.getElementById('chartStatusLampu').getContext('2d');
-    chartSL = new Chart(ctxSL, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Status Lampu',
-          data: statusLampus,
-          borderColor: '#DC2626', // Tailwind red-600
-          backgroundColor: 'rgba(220, 38, 38, 0.3)',
-          stepped: true,
-          fill: true,
-          tension: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            min: 0,
-            max: 1,
-            ticks: { stepSize: 1 },
-            title: { display: true, text: 'Status Lampu (0 atau 1)' }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                min: 0,
+                max: 1,
+                ticks: { stepSize: 1 },
+                title: { display: true, text: "Water Level (0 atau 1)" },
+              },
+              x: {
+                title: { display: true, text: "Tanggal & Jam" },
+              },
+            },
+            plugins: {
+              legend: { display: true },
+              tooltip: { enabled: true },
+            },
           },
-          x: {
-            title: { display: true, text: 'Tanggal dan Jam' }
-          }
-        },
-        plugins: {
-          legend: { display: true },
-          tooltip: { enabled: true }
-        }
-      }
-    });
-  }
-</script>
+        });
 
-</body>
+        // Soil Moisture (0-255)
+        const ctxSM = document
+          .getElementById("chartSoilMoisture")
+          .getContext("2d");
+        chartSM = new Chart(ctxSM, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Soil Moisture",
+                data: soilMoistures,
+                borderColor: "#16A34A", // Tailwind green-600
+                backgroundColor: "rgba(22, 163, 74, 0.3)",
+                fill: true,
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                min: 0,
+                max: 255,
+                title: { display: true, text: "Soil Moisture (0-255)" },
+              },
+              x: {
+                title: { display: true, text: "Tanggal & Jam" },
+              },
+            },
+            plugins: {
+              legend: { display: true },
+              tooltip: { enabled: true },
+            },
+          },
+        });
+
+        // Status Lampu (0/1)
+        const ctxSL = document
+          .getElementById("chartStatusLampu")
+          .getContext("2d");
+        chartSL = new Chart(ctxSL, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Status Lampu",
+                data: statusLampus,
+                borderColor: "#DC2626", // Tailwind red-600
+                backgroundColor: "rgba(220, 38, 38, 0.3)",
+                stepped: true,
+                fill: true,
+                tension: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                min: 0,
+                max: 1,
+                ticks: { stepSize: 1 },
+                title: { display: true, text: "Status Lampu (0 atau 1)" },
+              },
+              x: {
+                title: { display: true, text: "Tanggal & Jam" },
+              },
+            },
+            plugins: {
+              legend: { display: true },
+              tooltip: { enabled: true },
+            },
+          },
+        });
+      }
+    </script>
+  </body>
 </html>
